@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Notebook</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="notebook">
+    
+    <aside class="side-bar">
+      <div class="toolbar">
+
+        <button @click="addNote" :title="addButtonTitle">
+          <i class="material-icons"></i>add</i>
+          Add note
+        </button>
+        
+        <div class="notes">
+          <div 
+            class="note"
+            :class="{ selected: note === selectedNote }"
+            v-for="note of sortedNotes"
+            @click="selectNote(note)">
+            <i class="icon material-icons" v-if="note.favorite">star</i>
+            {{note.title}}
+          </div>  
+        </div>
+
+      </div>
+    </aside>
+
+    <template v-if="selectedNote">  
+      <section class="main">
+        <div>
+          <input v-model="selectedNote.title" placeholder="Note title" type="text">
+          <button @click="removeNote" title="Remove note">
+            <i class="material-icons">delete</i>
+          </button>
+          <button @click="favoriteNote" title="Favorite note">
+            <i class="material-icons">{{selectedNote.favorite ? 'star' : 'star_border'}}</i>
+          </button>
+        </div>
+
+        <textarea v-model="selectedNote.content"></textarea>
+        <div class="status-bar">
+          <span class="date">
+            <span class="label">Created</span>
+            <span class="value">{{selectedNote.created | date}}</span>
+          </span>
+          <span class="lines">
+            <span class="label">Lines</span>
+            <span class="value">{{linesCount}}</span>
+          </span>
+          <span class="words">
+            <span class="label">Words</span>
+            <span class="value">{{wordsCount}}</span>
+          </span>
+          <span class="characters">
+            <span class="label">Characters</span>
+            <span class="value">{{charactersCount}}</span>
+          </span>
+        </div>
+      </section>
+      
+      <aside class="preview" v-html="notePreview"></aside>
+    </template>
+
+  </div>
+
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/marked"></script>
+  <script src="https://unpkg.com/moment"></script>
+  <script>
+    const html = marked('**Bold** *Italic* [link](http://vuejs.org/)');
+    console.log(html);
+
+    Vue.filter('date', time => {
+      return moment(time).format('DD/MM/YY, HH:mm')
+    });
+
+    const vm = new Vue({
+      el: '#notebook',
+      data() {
+        return {
+          content: localStorage.getItem('content') || 'You can write in **markdown**',
+          notes: JSON.parse(localStorage.getItem('notes')) || [],
+          selectedId: localStorage.getItem('selected-id') || null,
+        };
+      },
+
+      computed: {
+        notePreview() {
+          return this.selectedNote
+            ? marked(this.selectedNote.content)
+            : '';
+        },
+        addButtonTitle() {
+          const ln = this.notes.length;
+          return `${ln} ${ln > 0 ? 'notes' : 'note'} already`;
+        },
+        selectedNote() {
+          return this.notes.find(note => note.id === this.selectedId)
+        },
+        sortedNotes() {
+          return this.notes.slice()
+            .sort((a, b) => a.created - b.created)
+            .sort((a, b) => (a.favorite === b.favorite) ? 0
+              : a.favorite ? -1
+              : 1);
+        },
+        linesCount() {
+          if(this.selectedNote) {
+            // Count the number of new line characters
+            return this.selectedNote.content.split(/\r\n|\r|\n/).length
+          };
+        },
+        wordsCount() {
+          if(this.selectedNote) {
+            let s = this.selectedNote.content;
+            // Turn new line characters into white-spaces
+            s = s.replace(/\n/g, ' ')
+            // Exclude start and end white-spaces
+            s = s.replace(/(^\s*)|(\s*$)/gi, '')
+            // Turn 2 or more duplicate white-spaces into 1
+            s = s.replace(/\s\s+/gi, ' ');
+            // Return the number of spaces
+            return s.split(' ').length;
+          }
+        },
+        charactersCount() {
+          if(this.selectedNote) {
+            return this.selectedNote.content.split('').length;
+          }
+        },
+      },
+
+      watch: {
+        content: 'saveNote',
+        notes: {
+          handler: 'saveNotes',
+          deep: true,
+        },
+        selectedId (val) {
+          localStorage.setItem('selected-id', val);
+        },
+      },
+
+      methods: {
+        addNote() {
+          const time = Date.now();
+          const note = {
+            id: String(time),
+            title: `New note ${this.notes.length + 1}`,
+            content: '**Hi!** this notebook is using [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet) for formating!',
+            created: time,
+            favorite: false,
+          };
+          this.notes.push(note);
+        },
+        saveNote() {
+          console.log('new note:', this.content);
+          localStorage.setItem('content', this.content);
+          this.reportOperation('saving');
+        },
+        favoriteNote() {
+          //this.selectedNote.favorite = !this.selectedNote.favorite;
+          //this.selectedNote.favorite = this.selectedNote.favorite ^ true
+          this.selectedNote.favorite ^= true
+        },
+        removeNote() {
+          if(this.selectedNote && confirm('Delete the note?')) {
+            const index = this.notes.indexOf(this.selectedNote);
+            if(index !== -1) {
+              this.notes.splice(index, 1);
+            }
+          }
+        },
+        saveNotes() {
+          localStorage.setItem('notes', JSON.stringify(this.notes));
+          console.log('Notes saved!', new Date());
+        },
+        selectNote(note) {
+          this.selectedId = note.id;
+        },
+        reportOperation(opName) {
+          console.log(`The ${opName} operation was completed!`);
+        },
+      },
+    });
+  </script>
+</body>
+</html>

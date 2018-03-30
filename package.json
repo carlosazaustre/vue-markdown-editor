@@ -1,0 +1,27 @@
+{
+  "name": "vue-markdown-editor",
+  "version": "1.0.0",
+  "description": "A markdown editor made with Vue.js",
+  "main": "index.js",
+  "scripts": {
+    "serve": "parcel src/index.html",
+    "build": "parcel build src/index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlosazaustre/vue-markdown-editor.git"
+  },
+  "author": "Carlos Azaustre <cazaustre@gmail.com> (https://carlosazaustre.es)",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/carlosazaustre/vue-markdown-editor/issues"
+  },
+  "homepage": "https://github.com/carlosazaustre/vue-markdown-editor#readme",
+  "devDependencies": {
+    "babel-preset-env": "^1.6.1",
+    "parcel-bundler": "^1.7.0"
+  },
+  "dependencies": {
+    "vue": "^2.5.16"
+  }
+}
